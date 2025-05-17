@@ -1,22 +1,12 @@
 using System;
 using System.Linq;
 using System.IO;
-using UnityEngine;
-
-#if UNITY_EDITOR
-using UnityEditor;
-#endif // UNITY_EDITOR
 
 namespace GoogleApis
 {
-    /// <summary>
-    /// Settings for GenerativeAI
-    /// </summary>
-    [Serializable]
     public static class GoogleApiKey
     {
-        [SerializeField]
-        internal static string apiKey;
+        public static string apiKey;
 
         static GoogleApiKey()
         {
@@ -29,11 +19,13 @@ namespace GoogleApis
                 .Select(line => line.Split('='))
                 .Where(parts => parts.Length == 2)
                 .ToDictionary(parts => parts[0], parts => parts[1]);
-                
-            if (!dict.TryGetValue("key", out string apiKey))
+
+            if (!dict.TryGetValue("key", out string key))
             {
                 throw new Exception($"key=YOUR_API_KEY not found in .env file");
             }
+
+            apiKey = key;
         }
     }
 }

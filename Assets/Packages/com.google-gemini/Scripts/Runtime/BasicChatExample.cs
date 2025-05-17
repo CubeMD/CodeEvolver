@@ -15,13 +15,10 @@ namespace GoogleApis.Example
     {
         [Header("UI references")]
         [SerializeField]
-        private TMP_InputField inputField;
+        private string inputField;
 
         [SerializeField]
-        private TextMeshProUGUI messageLabel;
-
-        [SerializeField]
-        private Button sendButton;
+        private string messageLabel;
 
         [Header("Options")]
         [SerializeField]
@@ -42,7 +39,8 @@ namespace GoogleApis.Example
         private readonly List<Content> messages = new();
         private static readonly StringBuilder sb = new();
 
-        private async void Start()
+        [ContextMenu("Send")]
+        private async void SendRequest()
         {
             // List all available models
             if (showAvailableModels)
@@ -53,29 +51,12 @@ namespace GoogleApis.Example
 
             model = GenerativeAIClient.GetModel(Models.Gemini_2_0_Flash);
 
-            // Setup UIs
-            sendButton.onClick.AddListener(async () => await SendRequest());
-            inputField.onSubmit.AddListener(async _ => await SendRequest());
-
-            // for Debug
-            inputField.text = "What is the weather like in Berlin tomorrow?";
-        }
-
-        private async Task SendRequest()
-        {
-            var input = inputField.text;
-            if (string.IsNullOrEmpty(input))
-            {
-                return;
-            }
-            inputField.text = string.Empty;
-
-            Content content = new(Role.user, input);
+            Content content = new(Role.user, inputField);
             messages.Add(content);
             RefreshView();
 
             GenerateContentRequest request = messages;
-            if(enableSearch)
+            if (enableSearch)
             {
                 request.Tools = new Tool[]
                 {
@@ -140,7 +121,7 @@ namespace GoogleApis.Example
             {
                 sb.AppendTMPRichText(message);
             }
-            messageLabel.SetText(sb);
+            Debug.Log(sb.ToString());
         }
 
         private static Content MergeContent(Content a, Content b)
