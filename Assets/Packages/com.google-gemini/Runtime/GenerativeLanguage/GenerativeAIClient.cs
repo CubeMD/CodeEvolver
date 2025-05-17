@@ -12,27 +12,17 @@ namespace GoogleApis.GenerativeLanguage
     /// See API reference here:
     /// https://ai.google.dev/api/rest
     /// </summary>
-    public sealed class GenerativeAIClient
+    public static class GenerativeAIClient
     {
         internal const string BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
-        private readonly string apiKey;
-
-        public GenerativeAIClient(string apiKey)
-        {
-            this.apiKey = apiKey;
-        }
-
-        public GenerativeAIClient(GoogleApiSettings settings) : this(settings.apiKey)
-        {
-        }
 
         /// <summary>
         /// Return a list of available models
         /// https://ai.google.dev/api/models#method:-models.list 
         /// </summary>
-        public async UniTask<ModelList> ListModelsAsync(CancellationToken cancellationToken)
+        public static async UniTask<ModelList> ListModelsAsync(CancellationToken cancellationToken)
         {
-            using var request = UnityWebRequest.Get($"{BASE_URL}/models?key={apiKey}");
+            using var request = UnityWebRequest.Get($"{BASE_URL}/models?key={GoogleApiKey.apiKey}");
             await request.SendWebRequest();
             if (cancellationToken.IsCancellationRequested)
             {
@@ -47,9 +37,9 @@ namespace GoogleApis.GenerativeLanguage
             return response.DeserializeFromJson<ModelList>();
         }
 
-        public GenerativeModel GetModel(string modelName)
+        public static GenerativeModel GetModel(string modelName)
         {
-            return new GenerativeModel(modelName, apiKey);
+            return new GenerativeModel(modelName, GoogleApiKey.apiKey);
         }
     }
 }

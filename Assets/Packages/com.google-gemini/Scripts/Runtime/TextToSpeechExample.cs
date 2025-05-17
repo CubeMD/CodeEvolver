@@ -22,7 +22,6 @@ namespace GoogleApis.Example
         [SerializeField]
         private string languageCode = "en-US";
 
-        private TextToSpeech tts;
 
         private VoiceSelectionParams voiceSelectionParams;
         private AudioConfig audioConfig;
@@ -31,9 +30,6 @@ namespace GoogleApis.Example
         private async void Start()
         {
             audioSource = GetComponent<AudioSource>();
-
-            using var settings = GoogleApiSettings.Get();
-            tts = new TextToSpeech(settings);
 
             voiceSelectionParams = new VoiceSelectionParams(languageCode, null, null);
             audioConfig = new AudioConfig()
@@ -49,7 +45,7 @@ namespace GoogleApis.Example
 
             // Check all available voices
             // https://cloud.google.com/text-to-speech/docs/voices
-            VoicesResponse voices = await tts.ListVoicesAsync(string.Empty, destroyCancellationToken);
+            VoicesResponse voices = await TextToSpeech.ListVoicesAsync(string.Empty, destroyCancellationToken);
             Debug.Log($"Voices: {voices}");
         }
 
@@ -67,7 +63,7 @@ namespace GoogleApis.Example
                 voice: voiceSelectionParams,
                 audioConfig: audioConfig
             );
-            var response = await tts.SynthesizeAsync(requestBody, destroyCancellationToken);
+            var response = await TextToSpeech.SynthesizeAsync(requestBody, destroyCancellationToken);
             Debug.Log($"response: {response}");
 
             // Play audio

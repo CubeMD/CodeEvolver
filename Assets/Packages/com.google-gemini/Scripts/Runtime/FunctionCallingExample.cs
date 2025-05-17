@@ -63,10 +63,6 @@ namespace GoogleApis.Example
 
         private void Start()
         {
-            // Make Gemini model
-            using var settings = GoogleApiSettings.Get();
-            var client = new GenerativeAIClient(settings);
-
             // Use 1.0 as 1.5 is rate limited in 5/minute, or increase the rate limit of 1.5
             string modelName = modelType switch
             {
@@ -74,7 +70,7 @@ namespace GoogleApis.Example
                 ModelType.Gemini_2_0_Pro => Models.Gemini_2_0_Pro_Exp,
                 _ => throw new System.NotImplementedException(),
             };
-            model = client.GetModel(modelName);
+            model = GenerativeAIClient.GetModel(modelName);
 
             // Setup UIs
             sendButton.onClick.AddListener(async () => await SendRequest());

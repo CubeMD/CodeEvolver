@@ -1,93 +1,108 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using GoogleApis.GenerativeLanguage;
-using TMPro;
+using LlmUI;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.UIElements;
+using System.Threading;
 
 namespace GoogleApis.Example
 {
     /// <summary>
     /// Basic Chat Example
     /// </summary>
-    public sealed class BasicChatExample : MonoBehaviour
+    [RequireComponent(typeof(UIDocument))]
+    sealed class BasicChatExampleUI : MonoBehaviour
     {
-        [Header("UI references")]
-        [SerializeField]
-        private TMP_InputField inputField;
-
-        [SerializeField]
-        private TextMeshProUGUI messageLabel;
-
-        [SerializeField]
-        private Button sendButton;
-
         [Header("Options")]
         [SerializeField]
         [TextArea(1, 10)]
-        private string systemInstruction = string.Empty;
+        string systemInstruction = string.Empty;
 
         [SerializeField]
-        private bool showAvailableModels;
+        bool showAvailableModels;
 
         [SerializeField]
-        private bool useStream = false;
+        bool useStream = false;
 
         [SerializeField]
-        private bool enableSearch = true;
+        bool enableSearch = true;
 
+        GenerativeModel model;
+        PromptInput promptInput;
+        readonly List<ContentItem> listViewSource = new();
+        readonly List<Content> messages = new();
+        static readonly StringBuilder sb = new();
 
-        private GenerativeModel model;
-        private readonly List<Content> messages = new();
-        private static readonly StringBuilder sb = new();
-
-        private async void Start()
+        void Awake()
         {
-            using var settings = GoogleApiSettings.Get();
-            var client = new GenerativeAIClient(settings);
+            Application.targetFrameRate = 60;
+        }
 
+        async void Start()
+        {
             // List all available models
             if (showAvailableModels)
             {
-                var models = await client.ListModelsAsync(destroyCancellationToken);
+                var models = await GenerativeAIClient.ListModelsAsync(destroyCancellationToken);
                 Debug.Log($"Available models: {models}");
             }
 
-            model = client.GetModel(Models.Gemini_2_0_Flash);
+            model = GenerativeAIClient.GetModel(Models.Gemini_2_0_Flash);
 
-            // Setup UIs
-            sendButton.onClick.AddListener(async () => await SendRequest());
-            inputField.onSubmit.AddListener(async _ => await SendRequest());
+            // Setup UI
+            if (!TryGetComponent(out UIDocument document))
+            {
+                Debug.LogError("UIDocument is missing");
+                return;
+            }
 
-            // for Debug
-            inputField.text = "What is the weather like in Berlin tomorrow?";
+            var root = document.rootVisualElement;
+            promptInput = root.Q("prompt-input").Q<PromptInput>();
+            promptInput.OnSend += SendRequest;
+            promptInput.Text = "Make a short story about a cat";
+            promptInput.Focus();
+
+            var contentListView = root.Q<ListView>("content-list-view");
+            contentListView.itemsSource = listViewSource;
         }
 
-        private async Task SendRequest()
+        void OnDestroy()
         {
-            var input = inputField.text;
-            if (string.IsNullOrEmpty(input))
+            promptInput.OnSend -= SendRequest;
+        }
+
+        void SendRequest(string text)
+        {
+            if (string.IsNullOrEmpty(text))
             {
                 return;
             }
-            inputField.text = string.Empty;
+            SendRequestAsync(text, destroyCancellationToken)
+                .Forget();
+        }
+
+        async UniTask SendRequestAsync(string input, CancellationToken cancellationToken)
+        {
+            promptInput.Text = string.Empty;
 
             Content content = new(Role.user, input);
             messages.Add(content);
             RefreshView();
 
             GenerateContentRequest request = messages;
-            if(enableSearch)
+            if (enableSearch)
             {
                 request.Tools = new Tool[]
                 {
                     new Tool.GoogleSearchRetrieval(),
                 };
             }
-            request.SafetySettings = new List<SafetySetting>()
+            request.SafetySettings = new SafetySetting[]
             {
-                new ()
+                new()
                 {
                     category = HarmCategory.HARM_CATEGORY_HARASSMENT,
                     threshold = HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
@@ -102,7 +117,7 @@ namespace GoogleApis.Example
 
             if (useStream)
             {
-                var stream = model.StreamGenerateContentAsync(request, destroyCancellationToken);
+                var stream = model.StreamGenerateContentAsync(request, cancellationToken);
                 await foreach (var response in stream)
                 {
                     if (response.Candidates.Length == 0)
@@ -126,7 +141,7 @@ namespace GoogleApis.Example
             }
             else
             {
-                var response = await model.GenerateContentAsync(request, destroyCancellationToken);
+                var response = await model.GenerateContentAsync(request, cancellationToken);
                 if (response.Candidates.Length > 0)
                 {
                     var modelContent = response.Candidates[0].Content;
@@ -136,17 +151,18 @@ namespace GoogleApis.Example
             }
         }
 
-        private void RefreshView()
+        void RefreshView()
         {
+            listViewSource.Clear();
             sb.Clear();
             foreach (var message in messages)
             {
                 sb.AppendTMPRichText(message);
+                listViewSource.Add(new ContentItem(message));
             }
-            messageLabel.SetText(sb);
         }
 
-        private static Content MergeContent(Content a, Content b)
+        static Content MergeContent(Content a, Content b)
         {
             if (a.Role != b.Role)
             {

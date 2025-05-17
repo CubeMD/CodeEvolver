@@ -32,6 +32,10 @@ StreamingAssets.meta
 .vs/
 .vscode/
 
+# Google key
+.env
+.env.meta
+
 # Gradle cache directory
 .gradle/
 

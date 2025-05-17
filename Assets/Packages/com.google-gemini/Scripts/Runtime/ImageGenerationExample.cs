@@ -29,10 +29,7 @@ namespace GoogleApis.Example
 
         private void Start()
         {
-            using var settings = GoogleApiSettings.Get();
-            var client = new GenerativeAIClient(settings);
-
-            model = client.GetModel(Models.Imagen_3_0);
+            model = GenerativeAIClient.GetModel(Models.Imagen_3_0);
 
             // Setup UIs
             sendButton.onClick.AddListener(async () => await SendRequest());

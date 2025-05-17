@@ -7,20 +7,16 @@ namespace GoogleApis.TTS
     /// Text to Speech Client using Google Cloud Text-to-Speech API
     /// https://cloud.google.com/text-to-speech/docs/reference/rest
     /// </summary>
-    public sealed class TextToSpeech
+    public static class TextToSpeech
     {
         private const string BASE_URL = "https://texttospeech.googleapis.com/v1beta1";
-        private readonly string uriVoicesList;
-        private readonly string uriTextSynthesize;
+        private static readonly string uriVoicesList;
+        private static readonly string uriTextSynthesize;
 
-        public TextToSpeech(string apiKey)
+        static TextToSpeech()
         {
-            uriVoicesList = $"{BASE_URL}/voices?key={apiKey}";
-            uriTextSynthesize = $"{BASE_URL}/text:synthesize?key={apiKey}";
-        }
-
-        public TextToSpeech(GoogleApiSettings settings) : this(settings.apiKey)
-        {
+            uriVoicesList = $"{BASE_URL}/voices?key={GoogleApiKey.apiKey}";
+            uriTextSynthesize = $"{BASE_URL}/text:synthesize?key={GoogleApiKey.apiKey}";
         }
 
         /// <summary>
@@ -28,7 +24,7 @@ namespace GoogleApis.TTS
         /// 
         /// https://cloud.google.com/text-to-speech/docs/reference/rest/v1beta1/voices/list
         /// </summary>
-        public async Task<VoicesResponse> ListVoicesAsync(string languageCode, CancellationToken cancellationToken)
+        public static async Task<VoicesResponse> ListVoicesAsync(string languageCode, CancellationToken cancellationToken)
         {
             string url = string.IsNullOrWhiteSpace(languageCode)
                 ? uriVoicesList
@@ -40,7 +36,7 @@ namespace GoogleApis.TTS
         /// https://cloud.google.com/text-to-speech/docs/reference/rest/v1beta1/text/synthesize
         /// </summary>
         /// <param name="message"></param>
-        public async Task<TextSynthesizeResponse> SynthesizeAsync(
+        public static async Task<TextSynthesizeResponse> SynthesizeAsync(
             TextSynthesizeRequest requestBody, CancellationToken cancellationToken)
         {
             return await Api.PostJsonAsync<TextSynthesizeRequest, TextSynthesizeResponse>(

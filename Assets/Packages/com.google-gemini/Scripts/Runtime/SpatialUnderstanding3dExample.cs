@@ -133,11 +133,8 @@ namespace GoogleApis.Example
                 return;
             }
 
-            using var settings = GoogleApiSettings.Get();
-            var client = new GenerativeAIClient(settings);
-
             // Gemini 2.0 Pro returns better results
-            model = client.GetModel(Models.Gemini_2_0_Flash);
+            model = GenerativeAIClient.GetModel(Models.Gemini_2_0_Flash);
             // model = client.GetModel(Models.Gemini_2_0_Pro_Exp);
 
             // Send request

@@ -66,11 +66,7 @@ namespace GoogleApis.Example
 
         private async void Start()
         {
-            // Setup model
-            using var settings = GoogleApiSettings.Get();
-            var client = new GenerativeAIClient(settings);
-
-            model = client.GetModel(Models.Gemini_2_0_Flash);
+            model = GenerativeAIClient.GetModel(Models.Gemini_2_0_Flash);
 
             // Send request
             var config = new GenerationConfig();
